@@ -1,2 +1,5 @@
 velas/conf
 go.sum
+*.ini
+*.db
+*.key
