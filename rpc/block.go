@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	"github.com/assetsadapterstore/velas-adapter/crypto"
@@ -61,10 +60,10 @@ func (blk *Block) GetByHash(hash string) (*BlockResponse, error) {
 }
 
 func (blk *Block) GetByHeight(height uint32) (*BlockResponse, error) {
-
+	h := strconv.FormatInt(int64(height), 10)
 	resp, err := resty.
 		R().
-		Get(blk.bk.baseAddress + "/api/v1/blocks?limit=1")
+		Get(blk.bk.baseAddress + "/api/v1/headers/height/" + h)
 	if err != nil {
 		return nil, err
 	}
@@ -72,35 +71,10 @@ func (blk *Block) GetByHeight(height uint32) (*BlockResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	headers := []*Header{}
-	if err := json.Unmarshal(body, &headers); err != nil {
-		return nil, errors.New(err)
-	}
-	if len(headers) == 0 {
-		return nil, fmt.Errorf("cannot get headers")
-	}
-
-	offset := strconv.FormatInt(int64((headers[0].Height - height)), 10)
-	resp, err = resty.
-		R().
-		Get(blk.bk.baseAddress + "/api/v1/blocks?limit=20&offset=" + offset)
-	if err != nil {
-		return nil, err
-	}
-	body, err = blk.bk.ReadResponse(resp)
-	if err != nil {
-		return nil, err
-	}
-	blocks := []*Header{}
-	if err := json.Unmarshal(body, &blocks); err != nil {
+	header := Header{}
+	if err := json.Unmarshal(body, &header); err != nil {
 		return nil, errors.New(err)
 	}
 
-	for _, block := range blocks {
-		if block.Height == height {
-			return blk.GetByHash(block.Hash)
-		}
-	}
-
-	return nil, fmt.Errorf("cannot fetch block [%v]", height)
+	return blk.GetByHash(header.Hash)
 }
