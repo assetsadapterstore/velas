@@ -1,0 +1,220 @@
+package rpc
+
+import (
+	"encoding/hex"
+	"testing"
+
+	"github.com/assetsadapterstore/velas-adapter/crypto"
+)
+
+func TestTx_GetListByAddress(t *testing.T) {
+	type fields struct {
+		baseAddress string
+	}
+	type args struct {
+		privateKey string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "Normal test",
+			fields:  fields{baseAddress: Url},
+			args:    args{privateKey: Pk},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := NewClient(tt.fields.baseAddress)
+			hd, _ := crypto.HDFromPrivateKeyHex(tt.args.privateKey)
+			wallet, _ := hd.ToWallet()
+			got, err := client.Tx.GetHashListByAddress(wallet.Base58Address)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetListByAddress() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if len(got) == 0 {
+				t.Errorf("GetListByAddress() got empty array")
+			}
+			t.Log(got)
+		})
+	}
+}
+
+// Test doesn't work correct
+func TestTx_GetByHashList(t *testing.T) {
+	type fields struct {
+		baseAddress string
+	}
+	type args struct {
+		hashes []string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []TxResponse
+		wantErr bool
+	}{
+		{
+			name:   "Normal test",
+			fields: fields{baseAddress: Url},
+			args: args{hashes: []string{
+				"de7efc5dff6860bdb78758a4851c48ab284c039b85320a7dd334648cb787e317",
+				"ca4161d7743a93d4a1c5c4ba8462435dc1a23219941fea5cebc26ff93d2bcec6",
+			}},
+			want: []TxResponse{
+				{
+					Size:               39,
+					Block:              "519cb2a564e0e682540663af09ef56f9068aeb5c51f8f852a3011ff860a479f9",
+					Confirmed:          7745,
+					ConfirmedTimestamp: 1565085672,
+					Total:              0,
+					Tx:                 nil,
+				}, {
+					Size:               38,
+					Block:              "498ae932b8066aefa14596547111fa957e9a42dd39cbac993564df2e1102f280",
+					Confirmed:          85229,
+					ConfirmedTimestamp: 1563535015,
+					Total:              0,
+					Tx:                 nil,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "check tx confirmed",
+			args:    args{hashes: []string{"53ab5f62deac40f68e18c0600e775c95ccde6b6fa7e9bc552d6109431571896f"}},
+			fields:  fields{baseAddress: Url},
+			want:    nil,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := NewClient(tt.fields.baseAddress)
+			got, err := client.Tx.GetByHashList(tt.args.hashes)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetListByAddress() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			/*if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetListByAddress() got = %v, want %v", got, tt.want)
+			}*/
+			t.Logf("%+v", got)
+		})
+	}
+}
+
+func TestTx_Validate(t *testing.T) {
+	type fields struct {
+		baseAddress string
+	}
+	type args struct {
+		privateKey string
+		toAddress  string
+		amount     uint64
+		commission uint64
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []TxResponse
+		wantErr bool
+	}{
+		{
+			name:   "Normal test",
+			fields: fields{baseAddress: Url},
+			args: args{
+				privateKey: Pk,
+				toAddress:  "VLa1hi77ZXD2BSWDD9wQe8vAhejXyS7vBM4",
+				amount:     1000,
+				commission: 1000000,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := NewClient(tt.fields.baseAddress)
+			hd, _ := crypto.HDFromPrivateKeyHex(tt.args.privateKey)
+			wallet, _ := hd.ToWallet()
+			unspents, _ := client.Wallet.GetUnspent(wallet.Base58Address)
+			tx, err := crypto.NewTransaction(unspents, tt.args.amount, *hd, wallet.Base58Address, tt.args.toAddress, tt.args.commission)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetListByAddress() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tx == nil {
+				t.Errorf("Publish() error = %v, wantErr %v", " tx is nil", tt.wantErr)
+				return
+			}
+			err = client.Tx.Validate(*tx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Publish() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			t.Log(hex.EncodeToString(tx.Hash[:]))
+		})
+	}
+}
+
+func TestTx_Publish(t *testing.T) {
+	type fields struct {
+		baseAddress string
+	}
+	type args struct {
+		privateKey string
+		toAddress  string
+		amount     uint64
+		commission uint64
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []TxResponse
+		wantErr bool
+	}{
+		{
+			name:   "Normal test",
+			fields: fields{baseAddress: Url},
+			args: args{
+				privateKey: Pk,
+				toAddress:  "VLa1hi77ZXD2BSWDD9wQe8vAhejXyS7vBM4",
+				amount:     1000,
+				commission: 1000000,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := NewClient(tt.fields.baseAddress)
+			hd, _ := crypto.HDFromPrivateKeyHex(tt.args.privateKey)
+			wallet, _ := hd.ToWallet()
+			unspents, _ := client.Wallet.GetUnspent(wallet.Base58Address)
+			tx, err := crypto.NewTransaction(unspents, tt.args.amount, *hd, wallet.Base58Address, tt.args.toAddress, tt.args.commission)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetListByAddress() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tx == nil {
+				t.Errorf("Publish() error = %v, wantErr %v", " tx is nil", tt.wantErr)
+				return
+			}
+			err = client.Tx.Publish(*tx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Publish() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			t.Log(hex.EncodeToString(tx.Hash[:]))
+		})
+	}
+}
