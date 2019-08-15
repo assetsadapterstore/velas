@@ -30,7 +30,7 @@ type WalletManager struct {
 
 	WalletClient *rpc.Client                   // 节点客户端
 	Config       *WalletConfig                 //钱包管理配置
-	Blockscanner *openwallet.BlockScannerBase  //区块扫描器
+	Blockscanner *VLXBlockScanner              //区块扫描器
 	Decoder      *AddressDecoder               //地址编码器
 	TxDecoder    openwallet.TransactionDecoder //交易单编码器
 	Log          *log.OWLogger                 //日志工具
@@ -41,7 +41,7 @@ func NewWalletManager() *WalletManager {
 	wm.Config = NewConfig(Symbol)
 	wm.WalletClient = rpc.NewClient(wm.Config.ServerAPI)
 	//区块扫描器
-	// wm.Blockscanner = NewVLXBlockScanner(&wm)
+	wm.Blockscanner = NewVLXBlockScanner(&wm)
 	wm.Decoder = NewAddressDecoder(&wm)
 	// wm.TxDecoder = NewTransactionDecoder(&wm)
 	wm.Log = log.NewOWLogger(wm.Symbol())
