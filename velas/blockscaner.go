@@ -26,6 +26,7 @@ import (
 	"github.com/assetsadapterstore/velas-adapter/rpc"
 	"github.com/blocktree/openwallet/common"
 	"github.com/blocktree/openwallet/openwallet"
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/shopspring/decimal"
 )
 
@@ -567,10 +568,10 @@ func (bs *VLXBlockScanner) extractTxInput(hash string, height uint64, trx *crypt
 		//in := vin[i]
 
 		pout := in.PreviousOutput
-		txid := hex.EncodeToString(pout.Hash[:])
-
+		txid := hex.EncodeToString(trx.Hash[:])
 		amount := common.IntToDecimals(int64(pout.Value), bs.wm.Decimal()).String()
-		addr := hex.EncodeToString(in.WalletAddress)
+		addr := base58.Encode(in.WalletAddress)
+
 		sourceKey, ok := scanAddressFunc(addr)
 		if ok {
 			input := openwallet.TxInput{}
@@ -620,14 +621,14 @@ func (bs *VLXBlockScanner) extractTxOutput(hash string, height uint64, trx *cryp
 		totalAmount = decimal.Zero
 	)
 
-	txid := hex.EncodeToString(trx.Hash[:])
 	//bs.wm.Log.Debug("vout:", vout.Array())
 	createAt := time.Now().Unix()
 	for _, output := range trx.Outputs {
 
+		txid := hex.EncodeToString(trx.Hash[:])
 		amount := common.IntToDecimals(int64(output.Value), bs.wm.Decimal()).String()
 		n := uint64(output.Index)
-		addr := hex.EncodeToString(output.WalletAddress)
+		addr := base58.Encode(output.WalletAddress)
 		sourceKey, ok := scanAddressFunc(addr)
 		if ok {
 
