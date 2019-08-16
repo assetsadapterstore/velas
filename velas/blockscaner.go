@@ -568,7 +568,7 @@ func (bs *VLXBlockScanner) extractTxInput(hash string, height uint64, trx *crypt
 		//in := vin[i]
 
 		pout := in.PreviousOutput
-		txid := hex.EncodeToString(trx.Hash[:])
+		txid := hex.EncodeToString(pout.Hash[:])
 		amount := common.IntToDecimals(int64(pout.Value), bs.wm.Decimal()).String()
 		addr := base58.Encode(in.WalletAddress)
 
