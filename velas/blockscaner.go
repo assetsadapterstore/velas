@@ -644,7 +644,7 @@ func (bs *VLXBlockScanner) extractTxOutput(hash string, height uint64, trx *cryp
 			outPut.Sid = openwallet.GenTxOutPutSID(txid, bs.wm.Symbol(), "", n)
 
 			//保存utxo到扩展字段
-			outPut.SetExtParam("scriptPubKey", output.Script)
+			outPut.SetExtParam("scriptPubKey", hex.EncodeToString(output.Script))
 			outPut.CreateAt = createAt
 			outPut.BlockHeight = height
 			outPut.BlockHash = hash

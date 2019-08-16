@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -22,7 +23,7 @@ func TestBlock_GetByHash(t *testing.T) {
 			name:   "Normal test",
 			fields: fields{baseAddress: Url},
 			args: args{
-				hash: "9e546bc9b274f08d053be29643cc76e7cc69ebb9fe8ba6465014ebe4c339b79a",
+				hash: "485fcaeff64e1b8b041b9a15af6d5a974e77bdd25f490136eab3b300afee9798",
 			},
 			want:    nil,
 			wantErr: false,
@@ -43,6 +44,9 @@ func TestBlock_GetByHash(t *testing.T) {
 				t.Errorf("GetByHash() got = %v, want %v", got, tt.want)
 			}
 			*/
+			if len(got.Transactions) > 0 && reflect.DeepEqual(got.Transactions[0].Hash, [32]byte{}) {
+				t.Error("empty hash")
+			}
 			if got.Header.TxnCount != uint32(len(got.Transactions)) {
 				t.Error("incorrect transactions count")
 			}

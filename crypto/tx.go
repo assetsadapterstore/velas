@@ -168,6 +168,6 @@ func (tx *Tx) UnmarshalJSON(data []byte) error {
 	if len(pHash) == 32 {
 		copy(hash[:], pHash[:32])
 	}
-	// tx.Hash = hash
+	tx.Hash = hash
 	return nil
 }
