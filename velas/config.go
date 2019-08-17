@@ -61,6 +61,8 @@ type WalletConfig struct {
 	MaxTxInputs int
 	//数据目录
 	DataDir string
+	//固定手续费
+	FixFees string
 }
 
 func NewConfig(symbol string) *WalletConfig {
@@ -82,6 +84,7 @@ func NewConfig(symbol string) *WalletConfig {
 	c.ServerAPI = ""
 	//最大的输入数量
 	c.MaxTxInputs = 50
+	c.FixFees = "0"
 
 	//创建目录
 	//file.MkdirAll(c.dbPath)

@@ -29,7 +29,7 @@ func (wm *WalletManager) CurveType() uint32 {
 
 //FullName 币种全名
 func (wm *WalletManager) FullName() string {
-	return "Bitcoin"
+	return "Velas"
 }
 
 //Symbol 币种标识
@@ -54,13 +54,6 @@ func (wm *WalletManager) GetTransactionDecoder() openwallet.TransactionDecoder {
 
 //GetBlockScanner 获取区块链
 func (wm *WalletManager) GetBlockScanner() openwallet.BlockScanner {
-
-	//先加载是否有配置文件
-	//err := wm.LoadConfig()
-	//if err != nil {
-	//	return nil
-	//}
-
 	return wm.Blockscanner
 }
 
@@ -71,6 +64,7 @@ func (wm *WalletManager) LoadAssetsConfig(c config.Configer) error {
 	wm.Config.IsTestNet, _ = c.Bool("isTestNet")
 	wm.WalletClient = rpc.NewClient(wm.Config.ServerAPI)
 	wm.Config.DataDir = c.String("dataDir")
+	wm.Config.FixFees, _ = c.Bool("fixFees")
 
 	//数据文件夹
 	wm.Config.makeDataDir()
@@ -88,6 +82,6 @@ func (wm *WalletManager) GetAssetsLogger() *log.OWLogger {
 }
 
 //GetSmartContractDecoder 获取智能合约解析器
-//func (wm *WalletManager) GetSmartContractDecoder() openwallet.SmartContractDecoder {
-//	return nil
-//}
+func (wm *WalletManager) GetSmartContractDecoder() openwallet.SmartContractDecoder {
+	return nil
+}
