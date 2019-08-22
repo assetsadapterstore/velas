@@ -16,7 +16,6 @@
 package velas
 
 import (
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -104,8 +103,9 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 	return rawTxArray, nil
 }
 
-//SendRawTransaction 广播交易单
+//SubmitRawTransaction 广播交易单
 func (decoder *TransactionDecoder) SubmitRawTransaction(wrapper openwallet.WalletDAI, rawTx *openwallet.RawTransaction) (*openwallet.Transaction, error) {
+	var trx crypto.Tx
 
 	if len(rawTx.RawHex) == 0 {
 		return nil, fmt.Errorf("transaction hex is empty")
@@ -115,12 +115,11 @@ func (decoder *TransactionDecoder) SubmitRawTransaction(wrapper openwallet.Walle
 		return nil, fmt.Errorf("transaction is not completed validation")
 	}
 
-	rawHex, err := base64.StdEncoding.DecodeString(rawTx.RawHex)
+	rawHex, err := hex.DecodeString(rawTx.RawHex)
 	if err != nil {
 		return nil, openwallet.ConvertError(err)
 	}
 
-	var trx crypto.Tx
 	err = json.Unmarshal(rawHex, &trx)
 	if err != nil {
 		return nil, openwallet.ConvertError(err)
@@ -164,7 +163,7 @@ func (decoder *TransactionDecoder) SubmitRawTransaction(wrapper openwallet.Walle
 
 ////////////////////////// VLX implement //////////////////////////
 
-//CreateRawTransaction 创建交易单
+//CreateVLXRawTransaction 创建交易单
 func (decoder *TransactionDecoder) CreateVLXRawTransaction(wrapper openwallet.WalletDAI, rawTx *openwallet.RawTransaction) error {
 
 	var (
@@ -422,8 +421,8 @@ func (decoder *TransactionDecoder) CreateVLXSummaryRawTransaction(wrapper openwa
 	for _, addrBalance := range addrBalanceArray {
 		decoder.wm.Log.Debugf("addrBalance: %+v", addrBalance)
 		//检查余额是否超过最低转账
-		addrBalance_dec, _ := decimal.NewFromString(addrBalance.Balance)
-		if addrBalance_dec.GreaterThanOrEqual(minTransfer) {
+		addrBalanceDec, _ := decimal.NewFromString(addrBalance.Balance)
+		if addrBalanceDec.GreaterThanOrEqual(minTransfer) {
 			//添加到转账地址数组
 			sumAddresses = append(sumAddresses, addrBalance.Address)
 		}
