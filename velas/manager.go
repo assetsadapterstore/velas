@@ -43,7 +43,7 @@ func NewWalletManager() *WalletManager {
 	//区块扫描器
 	wm.Blockscanner = NewVLXBlockScanner(&wm)
 	wm.Decoder = NewAddressDecoder(&wm)
-	// wm.TxDecoder = NewTransactionDecoder(&wm)
+	wm.TxDecoder = NewTransactionDecoder(&wm)
 	wm.Log = log.NewOWLogger(wm.Symbol())
 	return &wm
 }
