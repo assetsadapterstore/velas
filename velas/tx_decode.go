@@ -178,6 +178,10 @@ func (decoder *TransactionDecoder) CreateVLXRawTransaction(wrapper openwallet.Wa
 		limit       = 2000
 	)
 
+	if len(rawTx.To) == 0 {
+		return errors.New("Receiver address is empty")
+	}
+
 	address, err := wrapper.GetAddressList(0, limit, "AccountID", rawTx.Account.AccountID)
 	if err != nil {
 		return err
@@ -185,7 +189,6 @@ func (decoder *TransactionDecoder) CreateVLXRawTransaction(wrapper openwallet.Wa
 
 	if len(address) == 0 {
 		return openwallet.Errorf(openwallet.ErrAccountNotAddress, "[%s] have not address", accountID)
-		// return fmt.Errorf("[%s] have not addresses", accountID)
 	}
 
 	searchAddrs := make([]string, 0)
@@ -200,10 +203,6 @@ func (decoder *TransactionDecoder) CreateVLXRawTransaction(wrapper openwallet.Wa
 
 	if len(unspents) == 0 {
 		return fmt.Errorf("[%s] balance is not enough", accountID)
-	}
-
-	if len(rawTx.To) == 0 {
-		return errors.New("Receiver address is empty")
 	}
 
 	//计算总发送金额
@@ -229,11 +228,6 @@ func (decoder *TransactionDecoder) CreateVLXRawTransaction(wrapper openwallet.Wa
 
 	decoder.wm.Log.Info("Calculating wallet unspent record to build transaction...")
 	computeTotalSend := totalSend.Add(fixFees)
-	//循环的计算余额是否足够支付发送数额+手续费
-
-	if balance.LessThan(computeTotalSend) {
-		return fmt.Errorf("The balance: %s is not enough! ", balance.StringFixed(decoder.wm.Decimal()))
-	}
 
 	//计算一个可用于支付的余额
 	for _, u := range unspents {
@@ -243,6 +237,11 @@ func (decoder *TransactionDecoder) CreateVLXRawTransaction(wrapper openwallet.Wa
 		if balance.GreaterThanOrEqual(computeTotalSend) {
 			break
 		}
+	}
+
+	//判断余额是否足够支付发送数额+手续费
+	if balance.LessThan(computeTotalSend) {
+		return fmt.Errorf("The balance: %s is not enough! ", balance.StringFixed(decoder.wm.Decimal()))
 	}
 
 	//取账户最后一个地址
