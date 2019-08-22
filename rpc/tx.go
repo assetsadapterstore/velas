@@ -134,21 +134,21 @@ func (tx *Tx) Validate(txData crypto.Tx) error {
 	return nil
 }
 
-func (tx *Tx) Publish(txData crypto.Tx) error {
+func (tx *Tx) Publish(txData crypto.Tx) (*TxPublishResponse, error) {
 	resp, err := resty.
 		R().
 		SetBody(&txData).
 		Post(tx.bk.baseAddress + "/api/v1/txs/publish")
 	if err != nil {
-		return errors.New(err)
+		return nil, errors.New(err)
 	}
 	body, err := tx.bk.ReadResponse(resp)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	response := TxPublishResponse{}
 	if err := json.Unmarshal(body, &response); err != nil {
-		return errors.New(err)
+		return nil, errors.New(err)
 	}
-	return nil
+	return &response, nil
 }

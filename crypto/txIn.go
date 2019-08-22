@@ -20,9 +20,10 @@ type TransactionInput struct {
 }
 
 type TransactionInputOutpoint struct {
-	Hash  [32]byte `json:"hash"`  // The hash of the referenced transaction
-	Index uint32   `json:"index"` // The index of the specific output in the transaction. The first output is 0, etc.
-	Value uint64   `json:"value"` // Transaction Value
+	Hash    [32]byte `json:"hash"`  // The hash of the referenced transaction
+	Index   uint32   `json:"index"` // The index of the specific output in the transaction. The first output is 0, etc.
+	Value   uint64   `json:"value"` // Transaction Value
+	Address string
 }
 
 // ToBytes convert TransactionInputOutpoint to bytes slice

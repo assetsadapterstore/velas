@@ -64,7 +64,7 @@ func (wm *WalletManager) LoadAssetsConfig(c config.Configer) error {
 	wm.Config.IsTestNet, _ = c.Bool("isTestNet")
 	wm.WalletClient = rpc.NewClient(wm.Config.ServerAPI)
 	wm.Config.DataDir = c.String("dataDir")
-	wm.Config.FixFees, _ = c.Bool("fixFees")
+	wm.Config.FixFees = c.String("fixFees")
 
 	//数据文件夹
 	wm.Config.makeDataDir()

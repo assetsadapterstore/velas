@@ -18,11 +18,12 @@ type Tx struct {
 	Outputs  []TransactionOutput `json:"tx_out"`
 }
 
-func NewTransaction(unspents []TransactionInputOutpoint, amount uint64, key HD, fromAddress string, to string, commission uint64) (*Tx, error) {
-	totalin := int64(0)
+func NewTransaction(unspents []*TransactionInputOutpoint, toAddresses map[string]uint64, changeAddress string, commission uint64) (*Tx, error) {
+	totalin := uint64(0)
+	totalout := uint64(0)
 
 	for _, previousOutput := range unspents {
-		totalin += int64(previousOutput.Value)
+		totalin += previousOutput.Value
 	}
 
 	index := uint32(0)
@@ -37,25 +38,27 @@ func NewTransaction(unspents []TransactionInputOutpoint, amount uint64, key HD, 
 	})
 
 	index++
-	txOuts = append(txOuts, TransactionOutput{
-		Index:         index,
-		Script:        base58.Decode(to),
-		Value:         amount,
-		WalletAddress: base58.Decode(to),
-	})
+	for to, amount := range toAddresses {
+		totalout += amount
+		txOuts = append(txOuts, TransactionOutput{
+			Index:         index,
+			Script:        base58.Decode(to),
+			Value:         amount,
+			WalletAddress: base58.Decode(to),
+		})
+	}
 
-	change := totalin - int64(amount) - int64(commission)
+	change := totalin - totalout - commission
 
 	if change < 0 {
-		return nil, errors.Errorf("Insufficient funds, total amount %d, commission %d, send amount %d", totalin, commission, amount)
+		return nil, errors.Errorf("Insufficient funds, total amount %d, commission %d, send amount %d", totalin, commission, totalout)
 	} else if change > 0 {
-		// My address
 		index++
 		txOuts = append(txOuts, TransactionOutput{
 			Index:         index,
-			Script:        base58.Decode(fromAddress),
+			Script:        base58.Decode(changeAddress),
 			Value:         uint64(change),
-			WalletAddress: base58.Decode(fromAddress),
+			WalletAddress: base58.Decode(changeAddress),
 		})
 	}
 
@@ -65,20 +68,21 @@ func NewTransaction(unspents []TransactionInputOutpoint, amount uint64, key HD, 
 		Outputs:  txOuts,
 	}
 
-	// for _, previousOutput := range unspents {
-	// 	sigMsg := tx.msgForSign(previousOutput.Hash, previousOutput.Index)
-	// 	sig, err := cryptosign.CryptoSignDetached(sigMsg, key.privateKey)
-	// 	if err != 0 {
-	// 		return nil, errors.Errorf("Error on sign message")
-	// 	}
-	// 	txIns = append(txIns, TransactionInput{
-	// 		PublicKey:      key.publicKey,
-	// 		Sequence:       1,
-	// 		PreviousOutput: previousOutput,
-	// 		Script:         sig,
-	// 		WalletAddress:  base58.Decode(fromAddress),
-	// 	})
-	// }
+	for _, previousOutput := range unspents {
+		sigMsg := tx.MsgForSign(previousOutput.Hash, previousOutput.Index)
+		sigMsg = sigMsg
+		// sig, err := cryptosign.CryptoSignDetached(sigMsg, key.privateKey)
+		// if err != 0 {
+		// 	return nil, errors.Errorf("Error on sign message")
+		// }
+		txIns = append(txIns, TransactionInput{
+			// PublicKey:      base58.Decode(previousOutput.Address),
+			Sequence:       1,
+			PreviousOutput: *previousOutput,
+			// Script:         sig,
+			WalletAddress: base58.Decode(previousOutput.Address),
+		})
+	}
 	tx.Inputs = txIns
 	txHash := tx.generateHash()
 	tx.Hash = txHash
@@ -86,7 +90,7 @@ func NewTransaction(unspents []TransactionInputOutpoint, amount uint64, key HD, 
 }
 
 // MsgForSign return msg for sign
-func (tx *Tx) msgForSign(hash [32]byte, index uint32) []byte {
+func (tx *Tx) MsgForSign(hash [32]byte, index uint32) []byte {
 	txOutSlices := make([][]byte, 0)
 	for _, txOut := range tx.Outputs {
 		txOutSlices = append(txOutSlices, txOut.msgForSign())

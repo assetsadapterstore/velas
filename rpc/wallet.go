@@ -40,7 +40,7 @@ func (w *Wallet) GetBalance(address string) (uint64, error) {
 	return balanceResponse.Amount, nil
 }
 
-func (w *Wallet) GetUnspent(address string) ([]crypto.TransactionInputOutpoint, error) {
+func (w *Wallet) GetUnspent(address string) ([]*crypto.TransactionInputOutpoint, error) {
 	resp, err := resty.
 		R().
 		Get(w.bk.baseAddress + "/api/v1/wallet/unspent/" + address)
@@ -51,9 +51,12 @@ func (w *Wallet) GetUnspent(address string) ([]crypto.TransactionInputOutpoint, 
 	if err != nil {
 		return nil, err
 	}
-	unspents := make([]crypto.TransactionInputOutpoint, 0)
+	unspents := make([]*crypto.TransactionInputOutpoint, 0)
 	if err := json.Unmarshal(body, &unspents); err != nil {
 		return nil, errors.New(err)
+	}
+	for _, unspent := range unspents {
+		unspent.Address = address
 	}
 	return unspents, nil
 }
