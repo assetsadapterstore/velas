@@ -539,7 +539,7 @@ func (decoder *TransactionDecoder) createVLXRawTransaction(
 		txFrom           = make([]string, 0)
 		txTo             = make([]string, 0)
 		accountID        = rawTx.Account.AccountID
-		vouts            map[string]uint64
+		vouts            = make(map[string]uint64)
 	)
 
 	if len(affordUTXO) == 0 {
@@ -582,7 +582,7 @@ func (decoder *TransactionDecoder) createVLXRawTransaction(
 		}
 	}
 
-	commission := uint64(fees.IntPart())
+	commission := uint64(fees.Shift(decoder.wm.Decimal()).IntPart())
 
 	trx, err := crypto.NewTransaction(affordUTXO, vouts, changeAddress, commission)
 	if err != nil {
