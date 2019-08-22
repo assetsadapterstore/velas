@@ -245,7 +245,7 @@ func (decoder *TransactionDecoder) CreateVLXRawTransaction(wrapper openwallet.Wa
 	}
 
 	//取账户最后一个地址
-	changeAddress := hex.EncodeToString(affordUTXO[0].Hash[:])
+	changeAddress := affordUTXO[0].Address
 
 	changeAmount := balance.Sub(computeTotalSend)
 	rawTx.FeeRate = fixFees.StringFixed(decoder.wm.Decimal())
