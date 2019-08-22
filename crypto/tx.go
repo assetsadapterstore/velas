@@ -69,18 +69,10 @@ func NewTransaction(unspents []*TransactionInputOutpoint, toAddresses map[string
 	}
 
 	for _, previousOutput := range unspents {
-		sigMsg := tx.MsgForSign(previousOutput.Hash, previousOutput.Index)
-		sigMsg = sigMsg
-		// sig, err := cryptosign.CryptoSignDetached(sigMsg, key.privateKey)
-		// if err != 0 {
-		// 	return nil, errors.Errorf("Error on sign message")
-		// }
 		txIns = append(txIns, TransactionInput{
-			// PublicKey:      base58.Decode(previousOutput.Address),
 			Sequence:       1,
 			PreviousOutput: *previousOutput,
-			// Script:         sig,
-			WalletAddress: base58.Decode(previousOutput.Address),
+			WalletAddress:  base58.Decode(previousOutput.Address),
 		})
 	}
 	tx.Inputs = txIns

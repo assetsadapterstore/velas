@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/assetsadapterstore/velas-adapter/crypto"
-	"github.com/blocktree/go-owcdrivers/fiiiTransaction"
+	"github.com/assetsadapterstore/velas-adapter/txsigner"
 	"github.com/blocktree/openwallet/common"
 	"github.com/blocktree/openwallet/openwallet"
 	"github.com/shopspring/decimal"
@@ -281,11 +281,10 @@ func (decoder *TransactionDecoder) CreateVLXRawTransaction(wrapper openwallet.Wa
 	return nil
 }
 
-//SignRawTransaction 签名交易单
+//SignVLXRawTransaction 签名交易单
 func (decoder *TransactionDecoder) SignVLXRawTransaction(wrapper openwallet.WalletDAI, rawTx *openwallet.RawTransaction) error {
 
 	if rawTx.Signatures == nil || len(rawTx.Signatures) == 0 {
-		//this.wm.Log.Std.Error("len of signatures error. ")
 		return fmt.Errorf("transaction signature is empty")
 	}
 
@@ -303,30 +302,14 @@ func (decoder *TransactionDecoder) SignVLXRawTransaction(wrapper openwallet.Wall
 			if err != nil {
 				return err
 			}
-			decoder.wm.Log.Debug("privateKey:", hex.EncodeToString(keyBytes))
-
-			//privateKeys = append(privateKeys, keyBytes)
 			txHash := keySignature.Message
-
-			//transHash = append(transHash, txHash)
-
 			decoder.wm.Log.Debug("hash:", txHash)
 
 			//签名交易
 			/////////交易单哈希签名
-			signature, err := fiiiTransaction.SignTransactionMessage(txHash, keyBytes)
+			signature, err := txsigner.Default.SignTransactionHash(txHash, keyBytes)
 			if err != nil {
 				return fmt.Errorf("transaction hash sign failed, unexpected error: %v", err)
-			} else {
-
-				//for i, s := range sigPub {
-				//	decoder.wm.Log.Info("第", i+1, "个签名结果")
-				//	decoder.wm.Log.Info()
-				//	decoder.wm.Log.Info("对应的公钥为")
-				//	decoder.wm.Log.Info(hex.EncodeToString(s.Pubkey))
-				//}
-
-				//txHash.Normal.SigPub = *sigPub
 			}
 
 			keySignature.Signature = hex.EncodeToString(signature)
@@ -337,20 +320,17 @@ func (decoder *TransactionDecoder) SignVLXRawTransaction(wrapper openwallet.Wall
 
 	rawTx.Signatures[rawTx.Account.AccountID] = keySignatures
 
-	//decoder.wm.Log.Info("rawTx.Signatures 1:", rawTx.Signatures)
-
 	return nil
 }
 
-//VerifyRawTransaction 验证交易单，验证交易单并返回加入签名后的交易单
+//VerifyVLXRawTransaction 验证交易单，验证交易单并返回加入签名后的交易单
 func (decoder *TransactionDecoder) VerifyVLXRawTransaction(wrapper openwallet.WalletDAI, rawTx *openwallet.RawTransaction) error {
 
 	var (
-		sigPub = make([]fiiiTransaction.SigPub, 0)
-		//txUnlocks = make([]string, 0)
+		sigPub = make([]txsigner.SigPub, 0)
 	)
 
-	rawHex, err := base64.StdEncoding.DecodeString(rawTx.RawHex)
+	rawHex, err := hex.DecodeString(rawTx.RawHex)
 	if err != nil {
 		return err
 	}
@@ -358,7 +338,6 @@ func (decoder *TransactionDecoder) VerifyVLXRawTransaction(wrapper openwallet.Wa
 	emptyTrans := string(rawHex)
 
 	if rawTx.Signatures == nil || len(rawTx.Signatures) == 0 {
-		//this.wm.Log.Std.Error("len of signatures error. ")
 		return fmt.Errorf("transaction signature is empty")
 	}
 
@@ -369,7 +348,7 @@ func (decoder *TransactionDecoder) VerifyVLXRawTransaction(wrapper openwallet.Wa
 			signature, _ := hex.DecodeString(keySignature.Signature)
 			pubkey, _ := hex.DecodeString(keySignature.Address.PublicKey)
 
-			signaturePubkey := fiiiTransaction.SigPub{
+			signaturePubkey := txsigner.SigPub{
 				Signature: signature,
 				Pubkey:    pubkey,
 			}
@@ -383,11 +362,11 @@ func (decoder *TransactionDecoder) VerifyVLXRawTransaction(wrapper openwallet.Wa
 
 	/////////验证交易单
 	//验证时，对于公钥哈希地址，需要将对应的锁定脚本传入TxUnlock结构体
-	pass, signedTrans, err := fiiiTransaction.VerifyAndCombineTransaction(emptyTrans, sigPub)
+	pass, signedTrans, err := txsigner.Default.VerifyAndCombineTransaction(emptyTrans, sigPub)
 	if pass {
 		decoder.wm.Log.Debug("transaction verify passed")
 		rawTx.IsCompleted = true
-		rawTx.RawHex = base64.StdEncoding.EncodeToString([]byte(signedTrans))
+		rawTx.RawHex = signedTrans
 	} else {
 		decoder.wm.Log.Errorf("transaction verify failed, unexpected error: %v", err)
 		rawTx.IsCompleted = false
@@ -588,8 +567,6 @@ func (decoder *TransactionDecoder) createVLXRawTransaction(
 
 	//装配输入
 	for _, utxo := range affordUTXO {
-		// in := fiiiTransaction.Vin{utxo.TxID, int(utxo.Vout)}
-		// vins = append(vins, in)
 		amount := common.IntToDecimals(int64(utxo.Value), decoder.wm.Decimal())
 		txFrom = append(txFrom, fmt.Sprintf("%s:%s", utxo.Address, amount))
 	}
@@ -615,6 +592,9 @@ func (decoder *TransactionDecoder) createVLXRawTransaction(
 	}
 
 	json, err := trx.MarshalJSON()
+	if err != nil {
+		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "marshal transaction failed, unexpected error: %v", err)
+	}
 	rawTx.RawHex = hex.EncodeToString(json)
 
 	if rawTx.Signatures == nil {
