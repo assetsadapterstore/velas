@@ -74,6 +74,9 @@ func (singer *TransactionSigner) VerifyAndCombineTransaction(emptyTrans string, 
 		utxo.PublicKey = s.Pubkey
 	}
 
+	txHash := trx.GenerateHash()
+	trx.Hash = txHash
+
 	txBytes, err := trx.MarshalJSON()
 	if err != nil {
 		return false, "", errors.New("Failed to marshal transaction")

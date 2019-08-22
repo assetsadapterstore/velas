@@ -76,8 +76,6 @@ func NewTransaction(unspents []*TransactionInputOutpoint, toAddresses map[string
 		})
 	}
 	tx.Inputs = txIns
-	txHash := tx.generateHash()
-	tx.Hash = txHash
 	return &tx, nil
 }
 
@@ -101,7 +99,7 @@ func (tx *Tx) MsgForSign(hash [32]byte, index uint32) []byte {
 }
 
 // GenerateHash return generated hash
-func (tx *Tx) generateHash() [32]byte {
+func (tx *Tx) GenerateHash() [32]byte {
 	txInSlices := make([][]byte, 0)
 	for _, txIn := range tx.Inputs {
 		txInSlices = append(txInSlices, txIn.forBlkHash())
