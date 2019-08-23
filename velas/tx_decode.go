@@ -125,12 +125,12 @@ func (decoder *TransactionDecoder) SubmitRawTransaction(wrapper openwallet.Walle
 		return nil, openwallet.ConvertError(err)
 	}
 
-	resp, err := decoder.wm.WalletClient.Tx.Publish(trx)
+	_, err = decoder.wm.WalletClient.Tx.Publish(trx)
 	if err != nil {
 		return nil, err
 	}
 
-	rawTx.TxID = resp.Result
+	rawTx.TxID = hex.EncodeToString(trx.Hash[:])
 	rawTx.IsSubmit = true
 
 	decimals := int32(0)
@@ -254,7 +254,7 @@ func (decoder *TransactionDecoder) CreateVLXRawTransaction(wrapper openwallet.Wa
 	decoder.wm.Log.Std.Notice("-----------------------------------------------")
 	decoder.wm.Log.Std.Notice("From Account: %s", accountID)
 	decoder.wm.Log.Std.Notice("To Address: %s", strings.Join(targets, ", "))
-	decoder.wm.Log.Std.Notice("Use: %v", balance.String())
+	decoder.wm.Log.Std.Notice("Balance: %v", balance.String())
 	decoder.wm.Log.Std.Notice("Fees: %v", fixFees.String())
 	decoder.wm.Log.Std.Notice("Receive: %v", computeTotalSend.String())
 	decoder.wm.Log.Std.Notice("Change: %v", changeAmount.String())
@@ -303,9 +303,14 @@ func (decoder *TransactionDecoder) SignVLXRawTransaction(wrapper openwallet.Wall
 			txHash := keySignature.Message
 			decoder.wm.Log.Debug("hash:", txHash)
 
+			data, err := hex.DecodeString(txHash)
+			if err != nil {
+				return fmt.Errorf("Invalid message to sign")
+			}
+
 			//签名交易
 			/////////交易单哈希签名
-			signature, err := txsigner.Default.SignTransactionHash(txHash, keyBytes)
+			signature, err := txsigner.Default.SignTransactionHash(data, keyBytes, keySignature.EccType)
 			if err != nil {
 				return fmt.Errorf("transaction hash sign failed, unexpected error: %v", err)
 			}

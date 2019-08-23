@@ -32,8 +32,8 @@ const (
 	defaultConfig = `
 
 # RPC api url
-serverAPI = ""
-isTestNet = false
+ServerAPI = ""
+FixFees=0.001
 `
 )
 

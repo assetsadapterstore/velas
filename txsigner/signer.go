@@ -22,7 +22,7 @@ type SigPub struct {
 
 // SignTransactionHash 交易哈希签名算法
 // required
-func (singer *TransactionSigner) SignTransactionHash(message string, privateKey []byte) ([]byte, error) {
+func (singer *TransactionSigner) SignTransactionHash(message []byte, privateKey []byte, eccType uint32) ([]byte, error) {
 
 	if len(message) == 0 {
 		return nil, fmt.Errorf("No message to sign")
@@ -32,11 +32,7 @@ func (singer *TransactionSigner) SignTransactionHash(message string, privateKey 
 		return nil, fmt.Errorf("Invalid private key")
 	}
 
-	data, err := hex.DecodeString(message)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid message to sign")
-	}
-	signature, retCode := owcrypt.Signature(privateKey, nil, 0, data, uint16(len(data)), owcrypt.ECC_CURVE_ED25519)
+	signature, retCode := owcrypt.Signature(privateKey, nil, 0, message, uint16(len(message)), eccType)
 
 	if retCode != owcrypt.SUCCESS {
 		return nil, fmt.Errorf("Failed to sign message")
@@ -72,6 +68,7 @@ func (singer *TransactionSigner) VerifyAndCombineTransaction(emptyTrans string, 
 		}
 		utxo.Script = s.Signature
 		utxo.PublicKey = s.Pubkey
+		trx.Inputs[i] = utxo
 	}
 
 	txHash := trx.GenerateHash()
