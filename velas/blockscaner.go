@@ -983,7 +983,7 @@ func (bs *VLXBlockScanner) GetBalanceByAddress(address ...string) ([]*openwallet
 
 		balance := openwallet.Balance{
 			Address: a,
-			Balance: decimal.New(int64(amount), 0).StringFixed(bs.wm.Decimal()),
+			Balance: decimal.New(int64(amount), -bs.wm.Decimal()).String(),
 		}
 
 		addrsBalance = append(addrsBalance, &balance)
