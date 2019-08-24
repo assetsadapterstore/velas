@@ -657,10 +657,14 @@ func (bs *VLXBlockScanner) extractTxOutput(hash string, height uint64, trx *cryp
 
 			ed.TxOutputs = append(ed.TxOutputs, &outPut)
 
-			to = append(to, addr+":"+amount)
-			dAmount, _ := decimal.NewFromString(amount)
-			totalAmount = totalAmount.Add(dAmount)
 		}
+		if len(addr) == 0 {
+			continue
+		}
+		to = append(to, addr+":"+amount)
+		dAmount, _ := decimal.NewFromString(amount)
+		totalAmount = totalAmount.Add(dAmount)
+
 	}
 
 	return to, totalAmount
