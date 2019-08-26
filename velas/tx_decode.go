@@ -125,6 +125,11 @@ func (decoder *TransactionDecoder) SubmitRawTransaction(wrapper openwallet.Walle
 		return nil, openwallet.ConvertError(err)
 	}
 
+	err = decoder.wm.WalletClient.Tx.Validate(trx)
+	if err != nil {
+		return nil, err
+	}
+
 	_, err = decoder.wm.WalletClient.Tx.Publish(trx)
 	if err != nil {
 		return nil, err
