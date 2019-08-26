@@ -452,15 +452,18 @@ func (decoder *TransactionDecoder) CreateVLXSummaryRawTransaction(wrapper openwa
 
 	for i, addr := range sumAddresses {
 
+		outputs := make([]*crypto.TransactionInputOutpoint, 0)
 		outputs, err := decoder.wm.WalletClient.Wallet.GetUnspent(addr)
 		if err != nil {
 			return nil, err
 		}
-		unspents = append(unspents, outputs...)
 
-		sumUnspents = append(sumUnspents, unspents...)
-		if retainedBalance.GreaterThan(decimal.Zero) {
-			outputAddrs = appendOutput(outputAddrs, addr, retainedBalance)
+		if len(outputs) > 0 {
+			unspents = append(unspents, outputs...)
+			sumUnspents = append(sumUnspents, unspents...)
+			if retainedBalance.GreaterThan(decimal.Zero) {
+				outputAddrs = appendOutput(outputAddrs, addr, retainedBalance)
+			}
 		}
 
 		//如果遍历地址完结，就可以进行构建交易单
