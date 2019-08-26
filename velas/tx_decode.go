@@ -399,7 +399,6 @@ func (decoder *TransactionDecoder) CreateVLXSummaryRawTransaction(wrapper openwa
 		rawTxArray         = make([]*openwallet.RawTransactionWithError, 0)
 		outputAddrs        map[string]decimal.Decimal
 		totalInputAmount   decimal.Decimal
-		unspents           []*crypto.TransactionInputOutpoint
 		sumUnspents        []*crypto.TransactionInputOutpoint
 		fixFees            = decimal.New(0, 0)
 	)
@@ -451,24 +450,20 @@ func (decoder *TransactionDecoder) CreateVLXSummaryRawTransaction(wrapper openwa
 		fixFees, _ = decimal.NewFromString(sumRawTx.FeeRate)
 	}
 
-	unspents = make([]*crypto.TransactionInputOutpoint, 0)
+	sumUnspents = make([]*crypto.TransactionInputOutpoint, 0)
 	outputAddrs = make(map[string]decimal.Decimal, 0)
 	totalInputAmount = decimal.Zero
 
 	for i, addr := range sumAddresses {
 
-		outputs := make([]*crypto.TransactionInputOutpoint, 0)
 		outputs, err := decoder.wm.WalletClient.Wallet.GetUnspent(addr)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(outputs) > 0 {
-			unspents = append(unspents, outputs...)
-			sumUnspents = append(sumUnspents, unspents...)
-			if retainedBalance.GreaterThan(decimal.Zero) {
-				outputAddrs = appendOutput(outputAddrs, addr, retainedBalance)
-			}
+		sumUnspents = append(sumUnspents, outputs...)
+		if retainedBalance.GreaterThan(decimal.Zero) {
+			outputAddrs = appendOutput(outputAddrs, addr, retainedBalance)
 		}
 
 		//如果遍历地址完结，就可以进行构建交易单
@@ -524,7 +519,7 @@ func (decoder *TransactionDecoder) CreateVLXSummaryRawTransaction(wrapper openwa
 			rawTxArray = append(rawTxArray, rawTxWithErr)
 
 			//清空临时变量
-			unspents = make([]*crypto.TransactionInputOutpoint, 0)
+			sumUnspents = make([]*crypto.TransactionInputOutpoint, 0)
 			outputAddrs = make(map[string]decimal.Decimal, 0)
 			totalInputAmount = decimal.Zero
 
