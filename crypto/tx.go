@@ -37,8 +37,8 @@ func NewTransaction(unspents []*TransactionInputOutpoint, toAddresses map[string
 		Value: commission,
 	})
 
-	index++
 	for to, amount := range toAddresses {
+		index++
 		totalout += amount
 		txOuts = append(txOuts, TransactionOutput{
 			Index:         index,

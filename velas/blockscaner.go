@@ -623,11 +623,11 @@ func (bs *VLXBlockScanner) extractTxOutput(hash string, height uint64, trx *cryp
 
 	//bs.wm.Log.Debug("vout:", vout.Array())
 	createAt := time.Now().Unix()
-	for index, output := range trx.Outputs {
+	for _, output := range trx.Outputs {
 
 		txid := hex.EncodeToString(trx.Hash[:])
 		amount := common.IntToDecimals(int64(output.Value), bs.wm.Decimal()).String()
-		n := uint64(index)
+		n := uint64(output.Index)
 		addr := base58.Encode(output.WalletAddress)
 		sourceKey, ok := scanAddressFunc(addr)
 		if ok {
