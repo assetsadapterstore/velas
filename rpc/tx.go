@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/assetsadapterstore/velas-adapter/crypto"
+	"github.com/blocktree/openwallet/log"
 	"github.com/go-errors/errors"
 	"gopkg.in/resty.v1"
 )
@@ -135,6 +136,7 @@ func (tx *Tx) Validate(txData crypto.Tx) error {
 }
 
 func (tx *Tx) Publish(txData crypto.Tx) (*TxPublishResponse, error) {
+	log.Std.Info("publish TX: %+v", txData)
 	resp, err := resty.
 		R().
 		SetBody(&txData).
@@ -142,6 +144,8 @@ func (tx *Tx) Publish(txData crypto.Tx) (*TxPublishResponse, error) {
 	if err != nil {
 		return nil, errors.New(err)
 	}
+	log.Std.Info("%+v", resp)
+	log.Debugf("response: %s", resp.String())
 	body, err := tx.bk.ReadResponse(resp)
 	if err != nil {
 		return nil, err
@@ -150,5 +154,7 @@ func (tx *Tx) Publish(txData crypto.Tx) (*TxPublishResponse, error) {
 	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, errors.New(err)
 	}
+	log.Std.Info("%+v", response)
+
 	return &response, nil
 }
