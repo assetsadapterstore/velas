@@ -369,7 +369,7 @@ func (bs *VLXBlockScanner) BatchExtractTransaction(blockHeight uint32, blockHash
 	)
 
 	if len(txs) == 0 {
-		return fmt.Errorf("BatchExtractTransaction block is nil.")
+		return fmt.Errorf("Block[%+v] have no transaction(BatchExtractTransaction)", blockHeight)
 	}
 
 	//生产通道
