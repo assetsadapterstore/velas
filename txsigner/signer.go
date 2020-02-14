@@ -32,7 +32,7 @@ func (singer *TransactionSigner) SignTransactionHash(message []byte, privateKey 
 		return nil, fmt.Errorf("Invalid private key")
 	}
 
-	signature, retCode := owcrypt.Signature(privateKey, nil, 0, message, uint16(len(message)), eccType)
+	signature, _, retCode := owcrypt.Signature(privateKey, nil, message, eccType)
 
 	if retCode != owcrypt.SUCCESS {
 		return nil, fmt.Errorf("Failed to sign message")
@@ -63,7 +63,7 @@ func (singer *TransactionSigner) VerifyAndCombineTransaction(emptyTrans string, 
 		fmt.Println("msg:", hex.EncodeToString(msg))
 		fmt.Println("sig:", hex.EncodeToString(s.Signature))
 		fmt.Println("pub:", hex.EncodeToString(s.Pubkey))
-		if owcrypt.SUCCESS != owcrypt.Verify(s.Pubkey, nil, 0, msg, uint16(len(msg)), s.Signature, owcrypt.ECC_CURVE_ED25519) {
+		if owcrypt.SUCCESS != owcrypt.Verify(s.Pubkey, nil, msg, s.Signature, owcrypt.ECC_CURVE_ED25519) {
 			return false, "", errors.New("Signature verify failed")
 		}
 		utxo.Script = s.Signature
